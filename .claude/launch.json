@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Vite (frontend)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite"],
+      "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "Express API",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "watch", "--env-file=.env", "server/index.ts"],
+      "port": 3001,
+      "autoPort": false
+    }
+  ]
+}

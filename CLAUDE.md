@@ -1,7 +1,7 @@
-# Focusly — Timer App
+# Timer App
 
 ## Project Overview
-This is a standalone focus timer app called **Focusly**, extracted from a larger shadcn component gallery project. It's a Vite + React + TypeScript app using shadcn/ui components and Tailwind v4.
+This is a standalone focus timer app extracted from a larger shadcn component gallery project. It's a Vite + React + TypeScript app using shadcn/ui components and Tailwind v4.
 
 **GitHub:** https://github.com/jonathanriese/timer_app
 

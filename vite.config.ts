@@ -10,4 +10,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
+    proxy: {
+      "/api": "http://localhost:3001",
+    },
+  },
 })

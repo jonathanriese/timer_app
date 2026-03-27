@@ -15,14 +15,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Switch } from "@/components/ui/switch"
 import { TaskCard, type Task } from "@/components/TaskCard"
 
 type TimerState = "idle" | "running" | "paused" | "done"
-
-const INITIAL_TASKS: Task[] = [
-  { id: "1", label: "Test", done: false },
-  { id: "2", label: "Test 2", done: true },
-]
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -34,7 +30,17 @@ function formatTime(seconds: number): string {
 export default function TimerPage() {
   const [time, setTime] = useState("25")
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [tasksLoading, setTasksLoading] = useState(true)
+
+  // Load tasks from Notion on mount
+  useEffect(() => {
+    fetch("/api/tasks")
+      .then((r) => r.json())
+      .then((data) => setTasks(data))
+      .catch(console.error)
+      .finally(() => setTasksLoading(false))
+  }, [])
   const [newTaskId, setNewTaskId] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -46,6 +52,11 @@ export default function TimerPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [defaultTime, setDefaultTime] = useState("25")
   const [defaultBreakTime, setDefaultBreakTime] = useState("5")
+  const [darkMode, setDarkMode] = useState(true)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode)
+  }, [darkMode])
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
 
@@ -124,29 +135,49 @@ export default function TimerPage() {
   }
 
   function toggleTask(id: string) {
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id !== id) return t
-        if (!t.done && selectedTaskId === id) setSelectedTaskId(null)
-        return { ...t, done: !t.done }
-      })
-    )
+    const task = tasks.find((t) => t.id === id)
+    if (!task) return
+    const newDone = !task.done
+    if (!task.done && selectedTaskId === id) setSelectedTaskId(null)
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: newDone } : t)))
+    fetch(`/api/tasks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done: newDone }),
+    }).catch(console.error)
   }
 
   function renameTask(id: string, label: string) {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, label } : t)))
     if (id === newTaskId) setNewTaskId(null)
+    fetch(`/api/tasks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label }),
+    }).catch(console.error)
   }
 
   function deleteTask(id: string) {
     if (selectedTaskId === id) setSelectedTaskId(null)
     setTasks((prev) => prev.filter((t) => t.id !== id))
+    fetch(`/api/tasks/${id}`, { method: "DELETE" }).catch(console.error)
   }
 
   function addTask() {
-    const newTask: Task = { id: String(Date.now()), label: "New task", done: false }
-    setTasks((prev) => [...prev, newTask])
-    setNewTaskId(newTask.id)
+    const tempId = `temp-${Date.now()}`
+    setTasks((prev) => [...prev, { id: tempId, label: "New task", done: false }])
+    setNewTaskId(tempId)
+    fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: "New task" }),
+    })
+      .then((r) => r.json())
+      .then((newTask: Task) => {
+        setTasks((prev) => prev.map((t) => (t.id === tempId ? { ...t, id: newTask.id } : t)))
+        setNewTaskId((id) => (id === tempId ? newTask.id : id))
+      })
+      .catch(console.error)
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -303,6 +334,9 @@ export default function TimerPage() {
           <p className="text-[var(--foreground)] text-base font-normal leading-6">
             My tasks for today
           </p>
+          {tasksLoading && (
+            <p className="text-sm text-[var(--muted-foreground)]">Loading tasks…</p>
+          )}
           <div className="flex flex-col gap-3">
             {sortedTasks.map((task) => (
               <TaskCard
@@ -369,6 +403,10 @@ export default function TimerPage() {
                   minutes
                 </span>
               </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Label className="w-28 shrink-0">Dark mode</Label>
+              <Switch checked={darkMode} onCheckedChange={setDarkMode} />
             </div>
           </div>
           <Accordion type="single" collapsible>
