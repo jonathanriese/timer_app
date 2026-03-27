@@ -115,7 +115,7 @@ export default function TimerPage() {
       osc.start(t)
       osc.stop(t + 0.9)
     })
-    return () => ctx.close()
+    return () => { ctx.close() }
   }, [timerState])
 
   function startTimer() {
@@ -200,8 +200,8 @@ export default function TimerPage() {
         : (selectedTask?.label ?? "No task selected")
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-start justify-center p-8">
-      <div className="w-full max-w-sm bg-black rounded-[12px] p-6 flex flex-col gap-6 overflow-hidden">
+    <div className="min-h-screen bg-background flex items-start justify-center p-8">
+      <div className="w-full max-w-sm bg-card rounded-[12px] p-6 flex flex-col gap-6 overflow-hidden">
 
         {/* ── HEADER ── */}
         <div className="flex items-center justify-between">
